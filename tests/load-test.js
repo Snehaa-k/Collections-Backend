@@ -11,6 +11,7 @@ class LoadTester {
       responses: 0,
       errors: 0,
       responseTimes: [],
+      errorTypes: {},
       startTime: null,
       endTime: null
     };
@@ -19,8 +20,8 @@ class LoadTester {
   async authenticate() {
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify({
-        email: 'admin@collections.com',
-        password: 'admin123!'
+        email: 'admin@test.com',
+        password: 'admin123'
       });
 
       const options = {
@@ -82,20 +83,25 @@ class LoadTester {
           
           if (res.statusCode >= 400) {
             this.results.errors++;
+            const errorType = `HTTP_${res.statusCode}`;
+            this.results.errorTypes[errorType] = (this.results.errorTypes[errorType] || 0) + 1;
           }
           
           resolve({ statusCode: res.statusCode, responseTime });
         });
       });
 
-      req.on('error', () => {
+      req.on('error', (err) => {
         this.results.errors++;
+        const errorType = err.code || 'NETWORK_ERROR';
+        this.results.errorTypes[errorType] = (this.results.errorTypes[errorType] || 0) + 1;
         resolve({ error: true });
       });
 
       req.setTimeout(5000, () => {
         req.destroy();
         this.results.errors++;
+        this.results.errorTypes['TIMEOUT'] = (this.results.errorTypes['TIMEOUT'] || 0) + 1;
         resolve({ timeout: true });
       });
 
@@ -107,8 +113,13 @@ class LoadTester {
     console.log(`Starting load test with ${this.concurrency} concurrent users for ${this.duration}ms`);
     
     try {
+      // Test authentication first
       const token = await this.authenticate();
-      console.log('Authentication successful');
+      if (!token) {
+        console.error('❌ Authentication failed - cannot run load test');
+        return;
+      }
+      console.log('✅ Authentication successful');
       
       this.results.startTime = Date.now();
       const endTime = this.results.startTime + this.duration;
@@ -130,18 +141,20 @@ class LoadTester {
 
   async worker(token, endTime) {
     const endpoints = [
-      '/api/accounts',
-      '/api/accounts?page=1&limit=10',
-      '/api/accounts?status=active',
-      '/health'
+      '/health',                    // No auth needed
+      '/api/accounts',             // Needs auth
+      '/api/accounts?page=1&limit=10', // Needs auth
     ];
 
     while (Date.now() < endTime) {
       const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
-      await this.makeRequest(endpoint, token);
+      
+      // Use token for protected endpoints, null for public ones
+      const useToken = endpoint.startsWith('/api/') ? token : null;
+      await this.makeRequest(endpoint, useToken);
       
       // Small delay to prevent overwhelming
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 20));
     }
   }
 
@@ -161,6 +174,14 @@ class LoadTester {
     console.log(`Average Response Time: ${avgResponseTime.toFixed(2)}ms`);
     console.log(`95th Percentile Response Time: ${p95ResponseTime.toFixed(2)}ms`);
     console.log(`Error Rate: ${errorRate.toFixed(2)}%`);
+    
+    if (Object.keys(this.results.errorTypes).length > 0) {
+      console.log('\nError Breakdown:');
+      Object.entries(this.results.errorTypes).forEach(([type, count]) => {
+        console.log(`  ${type}: ${count} (${((count/this.results.errors)*100).toFixed(1)}%)`);
+      });
+    }
+    
     console.log('========================\n');
   }
 }
@@ -171,7 +192,7 @@ if (require.main === module) {
   console.log('Make sure server is running: npm run dev');
   
   const tester = new LoadTester({
-    concurrency: 50,  // Reduced for stability
+    concurrency: 100,  // Increased for higher load
     duration: 30000   // 30 seconds
   });
   

@@ -11,10 +11,10 @@ const createRateLimiter = (windowMs, max, message) => {
   });
 };
 
-// General API rate limiting
+// General API rate limiting (increased for load testing)
 const apiLimiter = createRateLimiter(
   parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
-  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000,
+  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000, // Increased from 1000 to 10000
   'Too many requests, please try again later'
 );
 
