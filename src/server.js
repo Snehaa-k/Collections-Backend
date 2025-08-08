@@ -8,10 +8,13 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const metricsCollector = require('./middleware/metrics');
+const WebSocketService = require('./services/websocket');
 const authRoutes = require('./routes/auth');
 const accountRoutes = require('./routes/accounts');
 const paymentRoutes = require('./routes/payments');
 const activityRoutes = require('./routes/activities');
+const metricsRoutes = require('./routes/metrics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,7 +55,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -70,6 +73,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting
 app.use('/api/', apiLimiter);
+
+// Metrics collection
+app.use(metricsCollector.middleware());
 
 // Request logging
 app.use((req, res, next) => {
@@ -95,6 +101,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', activityRoutes);
+app.use('/', metricsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -121,9 +128,14 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
+  logger.info(`Metrics Dashboard available at http://localhost:${PORT}/dashboard`);
 });
+
+// Initialize WebSocket service
+const wsService = new WebSocketService(server);
+app.set('wsService', wsService);
 
 module.exports = app;

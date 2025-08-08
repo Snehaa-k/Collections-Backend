@@ -7,14 +7,20 @@ class CacheService {
     this.isConnected = false;
     
     try {
-      this.redis = new Redis({
+      const redisConfig = {
         host: process.env.REDIS_HOST || 'localhost',
         port: process.env.REDIS_PORT || 6379,
-        password: process.env.REDIS_PASSWORD,
         retryDelayOnFailover: 100,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
-      });
+      };
+      
+      // Only add password if it exists and is not empty
+      if (process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.trim()) {
+        redisConfig.password = process.env.REDIS_PASSWORD;
+      }
+      
+      this.redis = new Redis(redisConfig);
 
       this.redis.on('error', (err) => {
         logger.warn('Redis connection error (falling back to memory):', err.message);

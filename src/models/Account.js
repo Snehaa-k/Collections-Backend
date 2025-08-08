@@ -16,10 +16,22 @@ class Account {
     return result.rows[0];
   }
 
-  static async findAll({ page = 1, limit = 50, filters = {}, sort = 'created_at', order = 'DESC' }) {
+  static async findAll({ page = 1, limit = 50, filters = {}, sort = 'created_at', order = 'DESC', latitude, longitude, radius }) {
     let query = 'SELECT * FROM accounts WHERE is_deleted = false';
     const params = [];
     let paramCount = 0;
+    
+    // Geographic filtering
+    if (latitude && longitude && radius) {
+      query += ` AND (
+        6371 * acos(
+          cos(radians($${++paramCount})) * cos(radians(latitude)) *
+          cos(radians(longitude) - radians($${++paramCount})) +
+          sin(radians($${++paramCount})) * sin(radians(latitude))
+        )
+      ) <= $${++paramCount}`;
+      params.push(latitude, longitude, latitude, radius);
+    }
 
     // Apply filters
     if (filters.status) {

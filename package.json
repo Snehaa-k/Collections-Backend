@@ -9,7 +9,7 @@
     "test": "jest",
     "test:load": "node tests/load-test.js",
     "test:debug": "node tests/simple-load-test.js",
-    "generate-data": "node scripts/generate-test-data.js",
+    "setup-admin": "node scripts/setup-admin.js",
     "migrate": "node src/database/migrate-simple.js",
     "seed": "node src/database/seed.js",
     "build": "echo 'Build complete'",
@@ -36,7 +36,8 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "winston": "^3.10.0",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "socket.io": "^4.7.2"
   },
   "devDependencies": {
     "autocannon": "^7.15.0",

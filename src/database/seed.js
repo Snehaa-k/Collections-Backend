@@ -53,6 +53,38 @@ async function seedDatabase() {
       }
     }
 
+    // Generate sample payments
+    logger.info('Generating sample payments...');
+    const accountsResult = await db.query('SELECT id FROM accounts LIMIT 100');
+    const accountIds = accountsResult.rows.map(row => row.id);
+    
+    for (let i = 0; i < 200; i++) {
+      const accountId = accountIds[Math.floor(Math.random() * accountIds.length)];
+      const amount = (Math.random() * 1000 + 50).toFixed(2);
+      const paymentMethod = ['credit_card', 'bank_transfer', 'cash'][Math.floor(Math.random() * 3)];
+      const status = ['completed', 'pending'][Math.floor(Math.random() * 2)];
+      
+      await db.query(
+        'INSERT INTO payments (account_id, amount, payment_method, status, processed_by) VALUES ($1, $2, $3, $4, $5)',
+        [accountId, amount, paymentMethod, status, 1]
+      );
+    }
+    
+    // Generate sample activities
+    logger.info('Generating sample activities...');
+    const activityTypes = ['phone_call', 'email_sent', 'payment_reminder', 'account_review'];
+    
+    for (let i = 0; i < 500; i++) {
+      const accountId = accountIds[Math.floor(Math.random() * accountIds.length)];
+      const activityType = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+      const description = `${activityType.replace('_', ' ')} activity for account`;
+      
+      await db.query(
+        'INSERT INTO activities (account_id, user_id, activity_type, description) VALUES ($1, $2, $3, $4)',
+        [accountId, Math.floor(Math.random() * 2) + 2, activityType, description]
+      );
+    }
+
     logger.info('Database seeding completed successfully');
   } catch (error) {
     logger.error('Seeding failed:', error);
