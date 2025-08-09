@@ -52,6 +52,12 @@ class PaymentController {
       await cache.del(`account:${accountId}`);
       await cache.del(`payments:${accountId}:*`);
 
+      // Send real-time notification
+      const wsService = req.app.get('wsService');
+      if (wsService) {
+        wsService.emitPaymentUpdate(accountId, payment);
+      }
+
       logger.info(`Payment recorded: ${payment.id} for account ${accountId}`);
       res.status(201).json(payment);
     } catch (error) {
@@ -136,6 +142,12 @@ class PaymentController {
       // Invalidate cache
       await cache.del(`account:${payment.account_id}`);
       await cache.del(`payments:${payment.account_id}:*`);
+
+      // Send real-time notification
+      const wsService = req.app.get('wsService');
+      if (wsService) {
+        wsService.emitPaymentUpdate(payment.account_id, updatedPayment);
+      }
 
       logger.info(`Payment status updated: ${paymentId} to ${status}`);
       res.json(updatedPayment);

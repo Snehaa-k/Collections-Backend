@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Payment Notifications Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>🔔 Real-time Payment Notifications Test</h1>
+    
+    <div id="status">Disconnected</div>
+    <div id="messages"></div>
+    
+    <script>
+        // Replace with your JWT token from login
+        const token = prompt('Enter your JWT token (get from /api/auth/login):');
+        
+        if (!token) {
+            document.getElementById('status').innerHTML = '❌ No token provided';
+        } else {
+            document.getElementById('status').innerHTML = '🔄 Connecting...';
+            
+            const socket = io('http://localhost:3001', {
+                auth: { token: token },
+                transports: ['websocket', 'polling']
+            });
+            
+            socket.on('connect', () => {
+                document.getElementById('status').innerHTML = '✅ Connected to WebSocket';
+                console.log('Connected successfully');
+                
+                // Join account room (replace with actual account ID)
+                socket.emit('join_account', 1);
+                console.log('Joined account room');
+            });
+            
+            socket.on('payment_update', (data) => {
+                const messages = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <h3>💰 Payment Update</h3>
+                    <p><strong>Account:</strong> ${data.accountId}</p>
+                    <p><strong>Amount:</strong> $${data.payment.amount}</p>
+                    <p><strong>Status:</strong> ${data.payment.status}</p>
+                    <p><strong>Time:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                    <hr>
+                `;
+                messages.insertBefore(div, messages.firstChild);
+            });
+            
+            socket.on('activity_update', (data) => {
+                const messages = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <h3>📝 Activity Update</h3>
+                    <p><strong>Account:</strong> ${data.accountId}</p>
+                    <p><strong>Activity:</strong> ${data.activity.description}</p>
+                    <p><strong>Time:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                    <hr>
+                `;
+                messages.insertBefore(div, messages.firstChild);
+            });
+            
+            socket.on('disconnect', (reason) => {
+                document.getElementById('status').innerHTML = '❌ Disconnected: ' + reason;
+                console.log('Disconnected:', reason);
+            });
+            
+            socket.on('connect_error', (error) => {
+                document.getElementById('status').innerHTML = '❌ Connection Error: ' + error.message;
+                console.log('Connection error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

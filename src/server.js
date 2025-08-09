@@ -16,6 +16,7 @@ const paymentRoutes = require('./routes/payments');
 const activityRoutes = require('./routes/activities');
 const metricsRoutes = require('./routes/metrics');
 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -62,8 +63,11 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Disposition', 'Content-Type']
 }));
 
 // Performance middleware
@@ -83,6 +87,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files
+app.use(express.static('.'));
+
+// Serve Socket.IO client
+app.get('/socket.io/socket.io.js', (req, res) => {
+  res.sendFile(__dirname + '/../node_modules/socket.io/client-dist/socket.io.js');
+});
+
+// Test WebSocket page
+app.get('/test', (req, res) => {
+  res.sendFile('test-websocket.html', { root: '.' });
+});
+
+
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
@@ -101,6 +120,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', activityRoutes);
+
 app.use('/', metricsRoutes);
 
 // Error handling middleware

@@ -7,7 +7,7 @@ const createRateLimiter = (windowMs, max, message) => {
     message: { error: message },
     standardHeaders: true,
     legacyHeaders: false,
-    // Uses memory store by default (works without Redis)
+    // Uses memory store (works without Redis)
   });
 };
 
@@ -32,7 +32,7 @@ const bulkLimiter = createRateLimiter(
   'Too many bulk operations, please try again later'
 );
 
-console.log('⚠️  Using memory-based rate limiting (Redis not required)');
+
 
 module.exports = {
   apiLimiter,
