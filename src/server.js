@@ -31,8 +31,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
-        description: 'Development server',
+        url: process.env.NODE_ENV === 'production' 
+          ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'your-app.onrender.com'}`
+          : `http://localhost:${PORT}`,
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
     components: {
@@ -62,13 +64,18 @@ app.use(helmet({
   },
 }));
 
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000'],
+// CORS configuration - allow all origins in production for API testing
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? true  // Allow all origins in production
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   exposedHeaders: ['Content-Disposition', 'Content-Type']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Performance middleware
 app.use(compression());
