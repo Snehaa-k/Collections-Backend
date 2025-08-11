@@ -10,6 +10,8 @@ const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const metricsCollector = require('./middleware/metrics');
 const WebSocketService = require('./services/websocket');
+const runMigrations = require('./database/migrate-simple');
+const seedDatabase = require('./database/seed');
 const authRoutes = require('./routes/auth');
 const accountRoutes = require('./routes/accounts');
 const paymentRoutes = require('./routes/payments');
@@ -155,10 +157,26 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
   logger.info(`Metrics Dashboard available at http://localhost:${PORT}/dashboard`);
+  
+  // Run migrations and seeding on startup (production)
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      logger.info('Running database migrations...');
+      await runMigrations();
+      
+      logger.info('Seeding database...');
+      await seedDatabase();
+      
+      logger.info('Database setup completed successfully');
+    } catch (error) {
+      logger.error('Database setup failed:', error);
+      // Don't exit - let the server run even if migrations fail
+    }
+  }
 });
 
 // Initialize WebSocket service

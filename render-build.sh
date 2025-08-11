@@ -11,12 +11,5 @@ npm ci
 echo "📁 Creating logs directory..."
 mkdir -p logs || echo "Logs directory creation skipped (production)"
 
-# Run database migrations
-echo "🗄️ Running database migrations..."
-npm run migrate
-
-# Seed database with initial data
-echo "🌱 Seeding database..."
-npm run seed
-
 echo "✅ Build completed successfully!"
+echo "⚠️ Database migrations will run on first server start"

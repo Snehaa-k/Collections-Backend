@@ -8,6 +8,20 @@ async function runMigrations() {
   try {
     logger.info('Starting database migrations...');
     
+    // Check if tables already exist
+    const tablesExist = await db.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    
+    if (tablesExist.rows[0].exists) {
+      logger.info('Tables already exist, skipping migrations');
+      return;
+    }
+    
     const schemaPath = path.join(__dirname, 'schema-simple.sql');
     const schema = await fs.readFile(schemaPath, 'utf8');
     
@@ -20,9 +34,14 @@ async function runMigrations() {
     
   } catch (error) {
     logger.error('Migration failed:', error);
-    process.exit(1);
+    if (require.main === module) {
+      process.exit(1);
+    }
+    throw error;
   } finally {
-    await db.close();
+    if (require.main === module) {
+      await db.close();
+    }
   }
 }
 
