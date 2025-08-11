@@ -20,7 +20,7 @@ services:
     environment:
       POSTGRES_DB: collections_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: sree@123
+      POSTGRES_PASSWORD: password@123
     ports:
       - "5432:5432"
     volumes:
