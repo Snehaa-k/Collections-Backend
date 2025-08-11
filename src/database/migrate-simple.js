@@ -39,6 +39,8 @@ async function runMigrations() {
     }
     throw error;
   } finally {
+    // Don't close the database connection when called from server startup
+    // Only close when run as standalone script
     if (require.main === module) {
       await db.close();
     }

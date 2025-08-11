@@ -88,9 +88,15 @@ async function seedDatabase() {
     logger.info('Database seeding completed successfully');
   } catch (error) {
     logger.error('Seeding failed:', error);
-    process.exit(1);
+    if (require.main === module) {
+      process.exit(1);
+    }
+    throw error;
   } finally {
-    await db.close();
+    // Don't close the database connection when called from server startup
+    if (require.main === module) {
+      await db.close();
+    }
   }
 }
 
