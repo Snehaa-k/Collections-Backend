@@ -3,7 +3,15 @@ const logger = require('../utils/logger');
 
 class Database {
   constructor() {
-    this.pool = new Pool({
+    // Use DATABASE_URL if available (Render provides this), otherwise use individual env vars
+    const config = process.env.DATABASE_URL ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      min: parseInt(process.env.DB_POOL_MIN) || 5,
+      max: parseInt(process.env.DB_POOL_MAX) || 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    } : {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
       database: process.env.DB_NAME,
@@ -13,7 +21,9 @@ class Database {
       max: parseInt(process.env.DB_POOL_MAX) || 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
-    });
+    };
+    
+    this.pool = new Pool(config);
 
     this.pool.on('error', (err) => {
       logger.error('Database pool error:', err);
