@@ -12,7 +12,7 @@
     "setup-admin": "node scripts/setup-admin.js",
     "migrate": "node src/database/migrate-simple.js",
     "seed": "node src/database/seed.js",
-    "build": "echo 'Build complete'",
+    "build": "./render-build.sh",
     "docker:build": "docker build -t collections-api .",
     "docker:run": "docker run -p 3000:3000 collections-api"
   },

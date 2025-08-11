@@ -69,6 +69,9 @@ A high-performance Node.js API server capable of handling 100,000+ concurrent us
 2. **Access the application**
    - API: http://localhost:3000
    - Documentation: http://localhost:3000/api-docs
+   - Metrics Dashboard: http://localhost:3000/dashboard
+   - WebSocket Test: http://localhost:3000/test
+   - Login Page: http://localhost:3000/login
 
 ## 📚 API Documentation
 
@@ -99,6 +102,21 @@ A high-performance Node.js API server capable of handling 100,000+ concurrent us
 - `POST /api/accounts/:id/activities` - Log activity
 - `GET /api/accounts/:id/activities` - Activity timeline
 - `GET /api/activities/bulk` - Bulk activity retrieval
+
+### Real-time Features
+
+- **WebSocket Connection**: Connect to `ws://localhost:3000` with JWT token
+- **Payment Notifications**: Real-time payment updates via WebSocket
+- **Activity Updates**: Live activity notifications
+- **Dashboard Metrics**: Real-time system metrics for admins
+
+### Monitoring & Testing
+
+- `GET /health` - Health check endpoint
+- `GET /dashboard` - Real-time metrics dashboard
+- `GET /metrics` - Prometheus-style metrics
+- `GET /test` - WebSocket test page for real-time notifications
+- `GET /login` - Simple login interface
 
 ## 🔐 Authentication
 
@@ -161,11 +179,25 @@ node tests/load-test.js
 GET /health
 ```
 
+### Metrics Dashboard
+- **URL**: http://localhost:3000/dashboard
+- **Features**: Real-time performance charts, system metrics, error tracking
+- **Authentication**: No authentication required for development
+
 ### Metrics Endpoints
+- `GET /metrics` - Prometheus-style metrics
+- `GET /api/metrics` - JSON metrics data
 - Memory usage tracking
 - Database query performance
 - API response times
 - Error rate monitoring
+
+### Real-time Notifications Testing
+
+1. **Open WebSocket test page**: http://localhost:3000/test
+2. **Get JWT token**: Login via `/api/auth/login` or use http://localhost:3000/login
+3. **Connect**: Paste token when prompted
+4. **Test**: Create payments via API to see real-time notifications
 
 ## 🔧 Configuration
 
